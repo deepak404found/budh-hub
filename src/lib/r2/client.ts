@@ -1,12 +1,19 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { r2Config, isR2Configured } from "@/lib/config/env";
 
-export const r2 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!
-  }
-});
+if (!isR2Configured()) {
+  console.warn("⚠️  R2 is not configured. R2 client will not work properly.");
+}
+
+export const r2 = isR2Configured()
+  ? new S3Client({
+      region: "auto",
+      endpoint: r2Config.endpoint,
+      credentials: {
+        accessKeyId: r2Config.accessKeyId,
+        secretAccessKey: r2Config.secretAccessKey,
+      },
+    })
+  : (null as unknown as S3Client); // Type assertion for optional R2
 
 

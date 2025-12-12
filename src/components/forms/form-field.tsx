@@ -20,6 +20,7 @@ interface FormFieldProps<
     onChange: (value: unknown) => void;
     onBlur: () => void;
     error?: string;
+    ref: React.Ref<any>;
   }) => ReactNode;
 }
 
@@ -47,12 +48,13 @@ export function FormField<
       <Controller
         name={name}
         control={control}
-        render={({ field: { value, onChange, onBlur } }) => {
+        render={({ field: { value, onChange, onBlur, ref } }) => {
           const child = children({
             value: value ?? "",
             onChange: (newValue) => onChange(newValue),
             onBlur,
             error,
+            ref,
           });
           return <>{child}</>;
         }}

@@ -11,6 +11,7 @@ import * as quizzesSchema from "./schema/quizzes";
 import * as quizQuestionsSchema from "./schema/quiz_questions";
 import * as quizAttemptsSchema from "./schema/quiz_attempts";
 import * as liveClassesSchema from "./schema/live_classes";
+import * as courseMaterialsSchema from "./schema/course_materials";
 // ai_cache removed - now using Redis via @/lib/redis
 import * as authSchema from "./schema/auth";
 
@@ -25,9 +26,16 @@ const schema = {
   ...quizQuestionsSchema,
   ...quizAttemptsSchema,
   ...liveClassesSchema,
+  ...courseMaterialsSchema,
   // aiCacheSchema removed - using Redis instead
   ...authSchema,
 };
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { dbConfig } from "@/lib/config/env";
+
+if (!dbConfig.url) {
+  throw new Error("DATABASE_URL is required. Please set it in your .env file.");
+}
+
+const pool = new Pool({ connectionString: dbConfig.url });
 export const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
