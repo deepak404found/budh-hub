@@ -66,3 +66,4 @@ SMTP_FROM=noreply@yourdomain.com
 - Verify SMTP_PASSWORD is correct (for Gmail, use App Password)
 - Ensure SMTP_FROM matches SMTP_USER for Gmail
 
+
