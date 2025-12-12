@@ -11,6 +11,7 @@ import * as quizzesSchema from "./schema/quizzes";
 import * as quizQuestionsSchema from "./schema/quiz_questions";
 import * as quizAttemptsSchema from "./schema/quiz_attempts";
 import * as liveClassesSchema from "./schema/live_classes";
+import * as courseMaterialsSchema from "./schema/course_materials";
 // ai_cache removed - now using Redis via @/lib/redis
 import * as authSchema from "./schema/auth";
 
@@ -25,6 +26,7 @@ const schema = {
   ...quizQuestionsSchema,
   ...quizAttemptsSchema,
   ...liveClassesSchema,
+  ...courseMaterialsSchema,
   // aiCacheSchema removed - using Redis instead
   ...authSchema,
 };

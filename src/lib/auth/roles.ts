@@ -49,3 +49,27 @@ export async function getUserRoleByEmail(email: string): Promise<UserRole | null
   }
 }
 
+/**
+ * Check if a user has a specific role
+ */
+export function hasRole(userRole: UserRole, requiredRole: UserRole): boolean {
+  const roleHierarchy: Record<UserRole, number> = {
+    ADMIN: 3,
+    INSTRUCTOR: 2,
+    LEARNER: 1,
+  };
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+}
+
+export function isAdmin(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
+export function isInstructor(role: UserRole): boolean {
+  return role === "INSTRUCTOR";
+}
+
+export function isLearner(role: UserRole): boolean {
+  return role === "LEARNER";
+}
+

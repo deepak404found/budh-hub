@@ -141,7 +141,7 @@ export async function InstructorDashboard({ userId }: InstructorDashboardProps) 
             Start building your first course or add a new one
           </p>
           <Link
-            href={"/courses/new" as any}
+            href={"/instructor/courses/new" as any}
             className="mt-4 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             Create Course
@@ -156,7 +156,7 @@ export async function InstructorDashboard({ userId }: InstructorDashboardProps) 
             View and manage all your courses
           </p>
           <Link
-            href={"/courses" as any}
+            href={"/instructor/courses" as any}
             className="mt-4 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             View Courses
