@@ -95,41 +95,37 @@ export default function ResetPasswordPage() {
 
   if (isValidatingToken) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-900 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md text-center">
-          <p className="text-zinc-600 dark:text-zinc-400">Validating reset token...</p>
-        </div>
+      <div className="w-full max-w-md text-center">
+        <p className="text-zinc-600 dark:text-zinc-400">Validating reset token...</p>
       </div>
     );
   }
 
   if (!tokenValid) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-900 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8 text-center">
+      <div className="w-full max-w-md space-y-8 text-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Invalid Reset Link
+          </h2>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            This password reset link is invalid or has expired.
+          </p>
+        </div>
+        <div className="space-y-4">
+          <Link
+            href="/auth/forgot-password"
+            className="inline-block rounded-md border border-transparent bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            Request a new reset link
+          </Link>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Invalid Reset Link
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              This password reset link is invalid or has expired.
-            </p>
-          </div>
-          <div className="space-y-4">
             <Link
-              href="/auth/forgot-password"
-              className="inline-block rounded-md border border-transparent bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              href="/auth/sign-in"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300"
             >
-              Request a new reset link
+              Back to sign in
             </Link>
-            <div>
-              <Link
-                href="/auth/sign-in"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300"
-              >
-                Back to sign in
-              </Link>
-            </div>
           </div>
         </div>
       </div>
@@ -137,8 +133,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-900 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Reset your password
@@ -205,7 +200,6 @@ export default function ResetPasswordPage() {
           </div>
         </form>
       </div>
-    </div>
   );
 }
 

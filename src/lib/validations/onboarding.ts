@@ -1,9 +1,13 @@
 import { z } from "zod";
 import { passwordSchema } from "./auth";
 
+/**
+ * Role selection schema for onboarding
+ * Note: ADMIN role cannot be selected during onboarding - it must be assigned manually
+ */
 export const roleSelectionSchema = z.object({
   role: z.enum(["INSTRUCTOR", "LEARNER"], {
-    message: "Please select a role",
+    message: "Please select a role. Admin role cannot be selected during onboarding.",
   }),
 });
 

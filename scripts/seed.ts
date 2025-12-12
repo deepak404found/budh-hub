@@ -17,6 +17,41 @@ async function main() {
   const db = drizzle(pool);
 
   try {
+    // Upsert admin - check if exists by email, update or insert
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@budhhub.com";
+    const existingAdmin = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, adminEmail))
+      .limit(1);
+
+    let admin;
+    if (existingAdmin.length > 0) {
+      // Update existing admin
+      [admin] = await db
+        .update(users)
+        .set({
+          name: "Admin",
+          role: "ADMIN",
+        })
+        .where(eq(users.id, existingAdmin[0].id))
+        .returning();
+      console.log("Updated existing admin:", admin.email);
+    } else {
+      // Insert new admin
+      [admin] = await db
+        .insert(users)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Admin",
+          email: adminEmail,
+          password_hash: null, // Admin should set password via password reset or onboarding
+          role: "ADMIN",
+        })
+        .returning();
+      console.log("Created new admin:", admin.email);
+    }
+
     // Upsert instructor - check if exists by email, update or insert
     const instructorEmail = "deepakyadu404@gmail.com";
     const existingInstructor = await db
@@ -207,6 +242,7 @@ async function main() {
     }
 
     console.log("\n✅ Seed complete:", {
+      admin: { id: admin.id, email: admin.email },
       instructor: { id: instructor.id, email: instructor.email },
       learner: { id: learner.id, email: learner.email },
       course: { id: course.id, title: course.title },
