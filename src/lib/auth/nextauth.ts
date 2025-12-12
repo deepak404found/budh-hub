@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import { createRedisAdapter } from "./redis-adapter";
+import { generateEmailTemplate as EmailTemplate } from "./email-template";
 
 // Validate SMTP configuration
 const smtpConfig = {
@@ -41,6 +42,36 @@ export const authOptions = {
         socketTimeout: 10000,
       },
       from: smtpConfig.from || smtpConfig.user || "noreply@example.com",
+      sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+        const { host } = new URL(url);
+        
+        // Generate the email template
+        const emailHtml = EmailTemplate(url, host, email);
+
+        // Send email using nodemailer
+        const server = provider.server as {
+          host: string;
+          port: number;
+          secure: boolean;
+          auth: { user: string; pass: string };
+        };
+        
+        const nodemailer = await import("nodemailer");
+        
+        const transporter = nodemailer.createTransport({
+          host: server.host,
+          port: server.port,
+          secure: server.secure,
+          auth: server.auth,
+        });
+
+        await transporter.sendMail({
+          to: email,
+          from: provider.from,
+          subject: `Sign in to ${host}`,
+          html: emailHtml,
+        });
+      },
     })
   ],
   secret: process.env.NEXTAUTH_SECRET,
