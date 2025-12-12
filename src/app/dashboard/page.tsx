@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/server";
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -95,12 +96,9 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-8">
-          <Link
-            href={"/auth/sign-in" as any}
-            className="text-sm text-zinc-600 hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300"
-          >
+          <SignOutButton className="text-sm text-zinc-600 hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300">
             Sign out
-          </Link>
+          </SignOutButton>
         </div>
       </div>
     </div>
