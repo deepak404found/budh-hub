@@ -8,5 +8,7 @@ export * from "./schema/quizzes";
 export * from "./schema/quiz_questions";
 export * from "./schema/quiz_attempts";
 export * from "./schema/live_classes";
-export * from "./schema/ai_cache";
+// ai_cache removed - now using Redis via @/lib/redis
+export * from "./schema/auth";
+export { db } from "./client";
 
