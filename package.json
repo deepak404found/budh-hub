@@ -20,6 +20,7 @@
     "@aws-sdk/s3-request-presigner": "^3.726.1",
     "@hookform/resolvers": "^5.2.2",
     "@upstash/redis": "^1.35.8",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.38.2",
     "next": "16.0.10",
     "next-auth": "^5.0.0-beta.30",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.17.11",
     "@types/nodemailer": "^7.0.4",
     "@types/pg": "^8.16.0",

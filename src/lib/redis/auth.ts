@@ -107,3 +107,79 @@ export async function deleteVerificationTokensByIdentifier(
   // This is a limitation - in production, consider using a set to track tokens per identifier
 }
 
+/**
+ * Password Reset Token Functions
+ */
+
+interface PasswordResetToken {
+  email: string;
+  token: string;
+  expires: Date;
+}
+
+/**
+ * Store password reset token in Redis
+ */
+export async function setPasswordResetToken(
+  email: string,
+  token: string,
+  expires: Date
+): Promise<void> {
+  if (!redis) {
+    console.warn(
+      "⚠️  Redis not configured. Password reset tokens will not be stored.\n" +
+      "Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in your .env file."
+    );
+    return;
+  }
+
+  const key = `password_reset_token:${token}`;
+  const ttl = Math.floor((expires.getTime() - Date.now()) / 1000);
+
+  if (ttl <= 0) {
+    return; // Already expired
+  }
+
+  await redis.set(
+    key,
+    { email, token, expires: expires.toISOString() },
+    { ex: ttl }
+  );
+}
+
+/**
+ * Get password reset token from Redis
+ */
+export async function getPasswordResetToken(
+  token: string
+): Promise<PasswordResetToken | null> {
+  if (!redis) {
+    return null;
+  }
+
+  const key = `password_reset_token:${token}`;
+  const data = await redis.get<{ email: string; token: string; expires: string } | null>(key);
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    email: data.email,
+    token: data.token,
+    expires: new Date(data.expires),
+  };
+}
+
+/**
+ * Delete password reset token from Redis
+ */
+export async function deletePasswordResetToken(token: string): Promise<void> {
+  if (!redis) {
+    return;
+  }
+
+  const key = `password_reset_token:${token}`;
+  await redis.del(key);
+}
+

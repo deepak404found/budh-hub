@@ -4,12 +4,13 @@ import { db } from "@/db";
 import { users } from "@/db/schema/users";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/nextauth";
+import { hashPassword, validatePasswordStrength } from "@/lib/auth/password";
 
 export async function POST(request: Request) {
   try {
     // Get the current user session
     const session = await auth();
-    
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized. Please sign in first." },
@@ -32,7 +33,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const { role, name, bio } = validationResult.data;
+    const { role, name, bio, password } = validationResult.data;
+
+    // Validate password strength if provided
+    if (password) {
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.valid) {
+        return NextResponse.json(
+          {
+            error: "Password does not meet requirements",
+            details: passwordValidation.errors,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Find the existing user by email (created by NextAuth)
     const existingUser = await db
@@ -48,14 +63,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Hash password if provided
+    let passwordHash: string | undefined;
+    if (password) {
+      passwordHash = await hashPassword(password);
+    }
+
     // Update the existing user with onboarding data
+    const updateData: {
+      name: string;
+      role: string;
+      password_hash?: string;
+    } = {
+      name,
+      role,
+    };
+
+    if (passwordHash) {
+      updateData.password_hash = passwordHash;
+    }
+
     const [updatedUser] = await db
       .update(users)
-      .set({
-        name,
-        role,
-        // bio can be stored in a separate profile table later if needed
-      })
+      .set(updateData)
       .where(eq(users.id, existingUser[0].id))
       .returning();
 
@@ -78,4 +108,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

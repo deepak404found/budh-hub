@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "./auth";
 
 export const roleSelectionSchema = z.object({
   role: z.enum(["INSTRUCTOR", "LEARNER"], {
@@ -15,7 +16,45 @@ export const profileSchema = z.object({
   bio: z.string().max(1000, "Bio must be less than 1000 characters").optional(),
 });
 
-export const onboardingSchema = roleSelectionSchema.merge(profileSchema);
+// Optional password schema for onboarding
+export const passwordSetupSchema = z
+  .object({
+    password: passwordSchema.optional(),
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // If password is provided, confirmPassword must match
+      if (data.password && !data.confirmPassword) {
+        return false;
+      }
+      if (!data.password && data.confirmPassword) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please confirm your password",
+      path: ["confirmPassword"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If both are provided, they must match
+      if (data.password && data.confirmPassword) {
+        return data.password === data.confirmPassword;
+      }
+      return true;
+    },
+    {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    }
+  );
+
+export const onboardingSchema = roleSelectionSchema
+  .merge(profileSchema)
+  .merge(passwordSetupSchema);
 
 export type RoleSelectionInput = z.infer<typeof roleSelectionSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;

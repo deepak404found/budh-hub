@@ -2,5 +2,6 @@ export { FormField } from "./form-field";
 export { FormInput } from "./form-input";
 export { FormSelect } from "./form-select";
 export { FormRadio } from "./form-radio";
+export { FormPassword } from "./form-password";
 
 

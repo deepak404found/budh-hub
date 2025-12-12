@@ -1,7 +1,12 @@
 import NextAuth from "next-auth";
 import EmailProvider from "next-auth/providers/email";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { createRedisAdapter } from "./redis-adapter";
 import { generateEmailTemplate as EmailTemplate } from "./email-template";
+import { db } from "@/db";
+import { users } from "@/db/schema/users";
+import { eq } from "drizzle-orm";
+import { verifyPassword } from "./password";
 
 // Validate SMTP configuration
 const smtpConfig = {
@@ -27,6 +32,48 @@ if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.password) {
 export const authOptions = {
   adapter: createRedisAdapter(),
   providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          const userResults = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, credentials.email as string))
+            .limit(1);
+
+          if (!userResults[0] || !userResults[0].password_hash) {
+            return null;
+          }
+
+          const isValid = await verifyPassword(
+            credentials.password as string,
+            userResults[0].password_hash
+          );
+
+          if (!isValid) {
+            return null;
+          }
+
+          return {
+            id: userResults[0].id,
+            email: userResults[0].email,
+            name: userResults[0].name || undefined,
+          };
+        } catch (error) {
+          console.error("Error in Credentials authorize:", error);
+          return null;
+        }
+      },
+    }),
     EmailProvider({
       server: {
         host: smtpConfig.host || "smtp.gmail.com",
@@ -48,24 +95,10 @@ export const authOptions = {
         // Generate the email template
         const emailHtml = EmailTemplate(url, host, email);
 
-        // Send email using nodemailer
-        const server = provider.server as {
-          host: string;
-          port: number;
-          secure: boolean;
-          auth: { user: string; pass: string };
-        };
+        // Send email using centralized email service
+        const { sendEmail } = await import("@/lib/email");
         
-        const nodemailer = await import("nodemailer");
-        
-        const transporter = nodemailer.createTransport({
-          host: server.host,
-          port: server.port,
-          secure: server.secure,
-          auth: server.auth,
-        });
-
-        await transporter.sendMail({
+        await sendEmail({
           to: email,
           from: provider.from,
           subject: `Sign in to ${host}`,

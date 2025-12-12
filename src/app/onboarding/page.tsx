@@ -8,11 +8,12 @@ import Link from "next/link";
 import {
   roleSelectionSchema,
   profileSchema,
+  onboardingSchema,
   type RoleSelectionInput,
   type ProfileInput,
   type OnboardingInput,
 } from "@/lib/validations/onboarding";
-import { FormField, FormInput, FormRadio } from "@/components/forms";
+import { FormField, FormInput, FormRadio, FormPassword } from "@/components/forms";
 
 type OnboardingStep = "role" | "profile";
 
@@ -21,6 +22,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<OnboardingStep>("role");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [setupPassword, setSetupPassword] = useState(false);
 
   const roleForm = useForm<RoleSelectionInput>({
     resolver: zodResolver(roleSelectionSchema),
@@ -29,11 +31,13 @@ export default function OnboardingPage() {
     },
   });
 
-  const profileForm = useForm<ProfileInput>({
-    resolver: zodResolver(profileSchema),
+  const profileForm = useForm<OnboardingInput>({
+    resolver: zodResolver(onboardingSchema),
     defaultValues: {
       name: "",
       bio: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -41,7 +45,7 @@ export default function OnboardingPage() {
     setStep("profile");
   };
 
-  const handleProfileSubmit = async (data: ProfileInput) => {
+  const handleProfileSubmit = async (data: OnboardingInput) => {
     setIsLoading(true);
     setError(null);
 
@@ -49,6 +53,9 @@ export default function OnboardingPage() {
       role: roleForm.getValues("role")!,
       name: data.name,
       bio: data.bio,
+      // Only include password if user opted to set it up
+      password: setupPassword ? data.password : undefined,
+      confirmPassword: setupPassword ? data.confirmPassword : undefined,
     };
 
     try {
@@ -198,6 +205,74 @@ export default function OnboardingPage() {
                   />
                 )}
               </FormField>
+
+              {/* Password Setup Section */}
+              <div className="space-y-4 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="setup-password"
+                    checked={setupPassword}
+                    onChange={(e) => {
+                      setSetupPassword(e.target.checked);
+                      if (!e.target.checked) {
+                        profileForm.setValue("password", "");
+                        profileForm.setValue("confirmPassword", "");
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-zinc-300 text-zinc-600 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800"
+                  />
+                  <label
+                    htmlFor="setup-password"
+                    className="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  >
+                    Set up password for faster login (optional)
+                  </label>
+                </div>
+                {setupPassword && (
+                  <div className="space-y-3 pt-2">
+                    <FormField
+                      form={profileForm}
+                      name="password"
+                      label="Password"
+                    >
+                      {({ value, onChange, onBlur, error, ref }) => (
+                        <FormPassword
+                          value={value as string}
+                          onChange={(e) => onChange(e.target.value)}
+                          onBlur={onBlur}
+                          placeholder="Create a strong password"
+                          error={error}
+                          autoComplete="new-password"
+                          disabled={isLoading}
+                          ref={ref}
+                        />
+                      )}
+                    </FormField>
+                    <FormField
+                      form={profileForm}
+                      name="confirmPassword"
+                      label="Confirm Password"
+                    >
+                      {({ value, onChange, onBlur, error, ref }) => (
+                        <FormPassword
+                          value={value as string}
+                          onChange={(e) => onChange(e.target.value)}
+                          onBlur={onBlur}
+                          placeholder="Confirm your password"
+                          error={error}
+                          autoComplete="new-password"
+                          disabled={isLoading}
+                          ref={ref}
+                        />
+                      )}
+                    </FormField>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Password must be at least 8 characters with uppercase, lowercase, number, and special character.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {error && (
