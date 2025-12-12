@@ -2,11 +2,18 @@ import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { eq, and } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import { users } from "../src/db/schema/users.js";
 import { courses } from "../src/db/schema/courses.js";
 import { modules } from "../src/db/schema/modules.js";
 import { lessons } from "../src/db/schema/lessons.js";
 import { enrollments } from "../src/db/schema/enrollments.js";
+
+const SALT_ROUNDS = 10;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
 
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -19,6 +26,12 @@ async function main() {
   try {
     // Upsert admin - check if exists by email, update or insert
     const adminEmail = process.env.ADMIN_EMAIL || "admin@budhhub.com";
+    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@1234";
+    const adminName = process.env.ADMIN_NAME || "Admin";
+
+    // Hash the password
+    const adminPasswordHash = await hashPassword(adminPassword);
+
     const existingAdmin = await db
       .select()
       .from(users)
@@ -27,33 +40,48 @@ async function main() {
 
     let admin;
     if (existingAdmin.length > 0) {
-      // Update existing admin
+      // Update existing admin with password
       [admin] = await db
         .update(users)
         .set({
-          name: "Admin",
+          name: adminName,
           role: "ADMIN",
+          password_hash: adminPasswordHash, // Update password hash
         })
         .where(eq(users.id, existingAdmin[0].id))
         .returning();
-      console.log("Updated existing admin:", admin.email);
+      console.log("✅ Updated existing admin:", admin.email);
+      console.log("   Password has been updated. You can login with:");
+      console.log(`   Email: ${adminEmail}`);
+      console.log(`   Password: ${adminPassword}`);
     } else {
-      // Insert new admin
+      // Insert new admin with password
       [admin] = await db
         .insert(users)
         .values({
           id: crypto.randomUUID(),
-          name: "Admin",
+          name: adminName,
           email: adminEmail,
-          password_hash: null, // Admin should set password via password reset or onboarding
+          password_hash: adminPasswordHash, // Set password hash
           role: "ADMIN",
         })
         .returning();
-      console.log("Created new admin:", admin.email);
+      console.log("✅ Created new admin:", admin.email);
+      console.log("   You can login with:");
+      console.log(`   Email: ${adminEmail}`);
+      console.log(`   Password: ${adminPassword}`);
     }
 
     // Upsert instructor - check if exists by email, update or insert
-    const instructorEmail = "deepakyadu404@gmail.com";
+    const instructorEmail =
+      process.env.INSTRUCTOR_EMAIL || "instructor@budhhub.com";
+    const instructorPassword =
+      process.env.INSTRUCTOR_PASSWORD || "Instructor@1234";
+    const instructorName = process.env.INSTRUCTOR_NAME || "Instructor";
+
+    // Hash the password
+    const instructorPasswordHash = await hashPassword(instructorPassword);
+
     const existingInstructor = await db
       .select()
       .from(users)
@@ -62,29 +90,36 @@ async function main() {
 
     let instructor;
     if (existingInstructor.length > 0) {
-      // Update existing instructor
+      // Update existing instructor with password
       [instructor] = await db
         .update(users)
         .set({
-          name: "Deepak",
+          name: instructorName,
           role: "INSTRUCTOR",
+          password_hash: instructorPasswordHash, // Update password hash
         })
         .where(eq(users.id, existingInstructor[0].id))
         .returning();
-      console.log("Updated existing instructor:", instructor.email);
+      console.log("✅ Updated existing instructor:", instructor.email);
+      console.log("   Password has been updated. You can login with:");
+      console.log(`   Email: ${instructorEmail}`);
+      console.log(`   Password: ${instructorPassword}`);
     } else {
-      // Insert new instructor
+      // Insert new instructor with password
       [instructor] = await db
         .insert(users)
         .values({
           id: crypto.randomUUID(),
-          name: "Deepak",
+          name: instructorName,
           email: instructorEmail,
-          password_hash: null,
+          password_hash: instructorPasswordHash, // Set password hash
           role: "INSTRUCTOR",
         })
         .returning();
-      console.log("Created new instructor:", instructor.email);
+      console.log("✅ Created new instructor:", instructor.email);
+      console.log("   You can login with:");
+      console.log(`   Email: ${instructorEmail}`);
+      console.log(`   Password: ${instructorPassword}`);
     }
 
     // Upsert learner - check if exists by email, update or insert
@@ -241,10 +276,30 @@ async function main() {
       console.log("Created new enrollment");
     }
 
-    console.log("\n✅ Seed complete:", {
-      admin: { id: admin.id, email: admin.email },
-      instructor: { id: instructor.id, email: instructor.email },
-      learner: { id: learner.id, email: learner.email },
+    console.log("\n✅ Seed complete!");
+    console.log("\n📋 Login Credentials:");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("👤 ADMIN:");
+    console.log(`   Email: ${adminEmail}`);
+    console.log(`   Password: ${adminPassword}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("👨‍🏫 INSTRUCTOR:");
+    console.log(`   Email: ${instructorEmail}`);
+    console.log(`   Password: ${instructorPassword}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(
+      "\n💡 Tip: You can customize these credentials by setting environment variables:"
+    );
+    console.log("   - ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME");
+    console.log("   - INSTRUCTOR_EMAIL, INSTRUCTOR_PASSWORD, INSTRUCTOR_NAME");
+    console.log("\n📊 Summary:", {
+      admin: { id: admin.id, email: admin.email, role: admin.role },
+      instructor: {
+        id: instructor.id,
+        email: instructor.email,
+        role: instructor.role,
+      },
+      learner: { id: learner.id, email: learner.email, role: learner.role },
       course: { id: course.id, title: course.title },
       module: { id: module.id, title: module.title },
       lessons: lessonRows.length,
