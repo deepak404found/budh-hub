@@ -1,3 +1,36 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Builds
+.next
+.turbo
+out
+dist
+build
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Drizzle
+drizzle
+
+# IDE
+.vercel
+.idea
+.vscode
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
