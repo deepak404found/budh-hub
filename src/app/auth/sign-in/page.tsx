@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { FormField, FormInput, FormPassword } from "@/components/forms";
 import { useSignIn } from "@/hooks/auth";
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
@@ -244,5 +244,26 @@ export default function SignInPage() {
         </form>
       )}
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Sign in to your account
+            </h2>
+            <p className="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
+              Loading...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }

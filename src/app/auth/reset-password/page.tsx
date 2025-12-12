@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/validations/auth";
 import { FormField, FormPassword } from "@/components/forms";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -200,6 +200,27 @@ export default function ResetPasswordPage() {
           </div>
         </form>
       </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Reset your password
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Loading...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
 
