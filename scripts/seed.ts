@@ -15,8 +15,10 @@ async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
+import { dbConfig, seedConfig } from "../src/lib/config/env.js";
+
 async function main() {
-  if (!process.env.DATABASE_URL) {
+  if (!dbConfig.url) {
     throw new Error("DATABASE_URL is required to run seed");
   }
 
@@ -25,9 +27,9 @@ async function main() {
 
   try {
     // Upsert admin - check if exists by email, update or insert
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@budhhub.com";
-    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@1234";
-    const adminName = process.env.ADMIN_NAME || "Admin";
+    const adminEmail = seedConfig.adminEmail;
+    const adminPassword = seedConfig.adminPassword;
+    const adminName = seedConfig.adminName;
 
     // Hash the password
     const adminPasswordHash = await hashPassword(adminPassword);
@@ -73,11 +75,9 @@ async function main() {
     }
 
     // Upsert instructor - check if exists by email, update or insert
-    const instructorEmail =
-      process.env.INSTRUCTOR_EMAIL || "instructor@budhhub.com";
-    const instructorPassword =
-      process.env.INSTRUCTOR_PASSWORD || "Instructor@1234";
-    const instructorName = process.env.INSTRUCTOR_NAME || "Instructor";
+    const instructorEmail = seedConfig.instructorEmail;
+    const instructorPassword = seedConfig.instructorPassword;
+    const instructorName = seedConfig.instructorName;
 
     // Hash the password
     const instructorPasswordHash = await hashPassword(instructorPassword);

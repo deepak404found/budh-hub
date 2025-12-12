@@ -29,5 +29,11 @@ const schema = {
   ...authSchema,
 };
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { dbConfig } from "@/lib/config/env";
+
+if (!dbConfig.url) {
+  throw new Error("DATABASE_URL is required. Please set it in your .env file.");
+}
+
+const pool = new Pool({ connectionString: dbConfig.url });
 export const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });

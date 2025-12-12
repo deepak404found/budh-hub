@@ -21,26 +21,23 @@ interface SMTPConfig {
   socketTimeout?: number;
 }
 
+import { smtpConfig, isSMTPConfigured } from "@/lib/config/env";
+
 /**
- * Get SMTP configuration from environment variables
+ * Get SMTP configuration from centralized config
  */
 export function getSMTPConfig(): SMTPConfig | null {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const password = process.env.SMTP_PASSWORD;
-  const port = Number(process.env.SMTP_PORT || 587);
-
-  if (!host || !user || !password) {
+  if (!isSMTPConfigured()) {
     return null;
   }
 
   return {
-    host,
-    port,
-    secure: port === 465,
+    host: smtpConfig.host,
+    port: smtpConfig.port,
+    secure: smtpConfig.secure,
     auth: {
-      user,
-      pass: password,
+      user: smtpConfig.user,
+      pass: smtpConfig.password,
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -77,10 +74,10 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   if (!config) {
     console.error("[EMAIL] ❌ SMTP configuration is missing");
     console.error("[EMAIL] Environment check:", {
-      SMTP_HOST: process.env.SMTP_HOST ? "✓ Set" : "✗ Missing",
-      SMTP_USER: process.env.SMTP_USER ? "✓ Set" : "✗ Missing",
-      SMTP_PASSWORD: process.env.SMTP_PASSWORD ? "✓ Set" : "✗ Missing",
-      SMTP_PORT: process.env.SMTP_PORT || "587 (default)",
+      SMTP_HOST: smtpConfig.host ? "✓ Set" : "✗ Missing",
+      SMTP_USER: smtpConfig.user ? "✓ Set" : "✗ Missing",
+      SMTP_PASSWORD: smtpConfig.password ? "✓ Set" : "✗ Missing",
+      SMTP_PORT: smtpConfig.port,
     });
     throw new Error("SMTP configuration is missing");
   }
@@ -101,7 +98,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   console.log("[EMAIL] ✓ Transporter created successfully");
 
-  const from = options.from || process.env.SMTP_FROM || config.auth.user;
+  const from = options.from || smtpConfig.from || config.auth.user;
   console.log("[EMAIL] Using 'from' address:", from);
 
   try {
@@ -132,4 +129,3 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
     throw sendError;
   }
 }
-

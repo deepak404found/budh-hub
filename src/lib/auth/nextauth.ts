@@ -9,27 +9,7 @@ import { eq } from "drizzle-orm";
 import { verifyPassword } from "./password";
 import { getUserRole } from "./roles";
 import type { UserRole } from "@/lib/types/roles";
-
-// Validate SMTP configuration
-const smtpConfig = {
-  host: process.env.SMTP_HOST,
-  user: process.env.SMTP_USER,
-  password: process.env.SMTP_PASSWORD,
-  from: process.env.SMTP_FROM,
-};
-
-if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.password) {
-  console.warn(
-    "⚠️  SMTP configuration incomplete. Email authentication will not work.\n" +
-    "Required environment variables:\n" +
-    "  - SMTP_HOST (e.g., smtp.gmail.com)\n" +
-    "  - SMTP_USER (your email address)\n" +
-    "  - SMTP_PASSWORD (for Gmail: use an App Password, not your regular password)\n" +
-    "  - SMTP_FROM (sender email, defaults to SMTP_USER)\n" +
-    "  - SMTP_PORT (defaults to 587)\n\n" +
-    "Gmail App Password setup: https://support.google.com/accounts/answer/185833"
-  );
-}
+import { smtpConfig, authConfig, isSMTPConfigured } from "@/lib/config/env";
 
 export const authOptions = {
   adapter: createRedisAdapter(),
@@ -80,8 +60,8 @@ export const authOptions = {
     EmailProvider({
       server: {
         host: smtpConfig.host || "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: Number(process.env.SMTP_PORT || 587) === 465, // true for 465, false for other ports
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
         auth: {
           user: smtpConfig.user,
           pass: smtpConfig.password,
@@ -110,7 +90,7 @@ export const authOptions = {
       },
     })
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authConfig.secret,
   session: { strategy: "jwt" as const },
   callbacks: {
     async jwt({ token, account, user }: { token: any; account?: any; user?: any }) {

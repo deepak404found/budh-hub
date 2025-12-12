@@ -95,11 +95,8 @@ export async function POST(request: Request) {
     }
 
     // Generate reset URL
-    const baseUrl =
-      process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000";
-    const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
+    const { appConfig } = await import("@/lib/config/env");
+    const resetUrl = `${appConfig.url}/auth/reset-password?token=${resetToken}`;
     console.log("[FORGOT-PASSWORD] Reset URL generated:", resetUrl);
 
     // Send reset email using centralized email service
