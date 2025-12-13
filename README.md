@@ -63,6 +63,10 @@ Before you begin, make sure you have:
    http://localhost:3000
    ```
 
+8. **Sign in with test credentials**
+   - See [Test Credentials](./docs/TEST_CREDENTIALS.md) for login information
+   - Or create a new account via the onboarding flow
+
 That's it! 🎉 You should now see the BudhHub homepage.
 
 ---
@@ -246,10 +250,24 @@ budhhub/
 
 ---
 
+## 🧪 Test Credentials
+
+For local development and testing, we provide test accounts. Check out the [Test Credentials Guide](./docs/TEST_CREDENTIALS.md) for login information.
+
+**Quick Access:**
+- 👑 **Admin**: `deepakyadu404@gmail.com` / `Deepak@12345`
+- 👨‍🏫 **Instructor**: `instructor@budhhub.com` / `Instructor@1234`
+- 🎓 **Learner**: Use your own email during onboarding
+
+> ⚠️ **Note**: These credentials are for development only. Never use in production!
+
+---
+
 ## 🎯 What's Next?
 
 - 📖 Read the [Product Documentation](./docs/PRODUCT.md) for detailed feature descriptions
 - 🔧 Check out [Technical Documentation](./docs/TECHNICAL.md) for architecture details
+- 🧪 Check [Test Credentials](./docs/TEST_CREDENTIALS.md) for development accounts
 - 🐛 Found a bug? Open an issue!
 - 💡 Have a feature request? We'd love to hear it!
 
