@@ -64,6 +64,10 @@ export async function POST(
       .where(eq(courses.id, courseId))
       .returning();
 
+    if (!updatedCourse) {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+
     return NextResponse.json({
       course: updatedCourse,
       message: is_published
@@ -72,6 +76,18 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error publishing course:", error);
+
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes("DbHandler")) {
+      console.error(
+        "Database connection error - pool may be exhausted or connection lost"
+      );
+      return NextResponse.json(
+        { error: "Database connection error. Please try again." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to update course publish status" },
       { status: 500 }

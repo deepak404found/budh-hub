@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, GripVertical, BookOpen, Video } from "lucide-react";
-import { useCourseDetails } from "@/hooks/courses";
+import { Plus, Edit, Trash2, GripVertical, BookOpen, Video, X } from "lucide-react";
+import { useCourseDetails, useLessons } from "@/hooks/courses";
 
 interface CourseBuilderProps {
   courseId: string;
@@ -14,8 +14,13 @@ interface CourseBuilderProps {
 export function CourseBuilder({ courseId, userId }: CourseBuilderProps) {
   const router = useRouter();
   const { courseDetails, isLoading, error, refetch } = useCourseDetails(courseId);
+  const { createLesson, updateLesson, deleteLesson, isCreating, isDeleting } = useLessons();
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
+  const [creatingLessonForModule, setCreatingLessonForModule] = useState<string | null>(null);
+  const [newLessonTitle, setNewLessonTitle] = useState("");
+  const [editingLesson, setEditingLesson] = useState<string | null>(null);
+  const [editingLessonTitle, setEditingLessonTitle] = useState("");
 
   const handleCreateModule = async () => {
     if (!newModuleTitle.trim()) {
@@ -51,6 +56,53 @@ export function CourseBuilder({ courseId, userId }: CourseBuilderProps) {
       console.error("Error creating module:", error);
       toast.error("An unexpected error occurred");
       setIsCreatingModule(false);
+    }
+  };
+
+  const handleCreateLesson = async (moduleId: string) => {
+    if (!newLessonTitle.trim()) {
+      toast.error("Lesson title is required");
+      return;
+    }
+
+    const lesson = await createLesson(moduleId, courseId, {
+      module_id: moduleId,
+      title: newLessonTitle,
+      ord: courseDetails?.lessons.filter((l: any) => l.module_id === moduleId).length || 0,
+    });
+
+    if (lesson) {
+      setNewLessonTitle("");
+      setCreatingLessonForModule(null);
+      refetch();
+    }
+  };
+
+  const handleUpdateLesson = async (moduleId: string, lessonId: string) => {
+    if (!editingLessonTitle.trim()) {
+      toast.error("Lesson title is required");
+      return;
+    }
+
+    const lesson = await updateLesson(courseId, moduleId, lessonId, {
+      title: editingLessonTitle,
+    });
+
+    if (lesson) {
+      setEditingLesson(null);
+      setEditingLessonTitle("");
+      refetch();
+    }
+  };
+
+  const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
+    if (!confirm("Are you sure you want to delete this lesson?")) {
+      return;
+    }
+
+    const success = await deleteLesson(courseId, moduleId, lessonId);
+    if (success) {
+      refetch();
     }
   };
 
@@ -157,11 +209,54 @@ export function CourseBuilder({ courseId, userId }: CourseBuilderProps) {
                   </div>
                 </div>
                 <div className="mt-4 pl-8">
-                  <button className="inline-flex items-center gap-2 rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600">
-                    <Plus className="h-4 w-4" />
-                    Add Lesson
-                  </button>
-                  {courseDetails.lessons.filter((l: any) => l.module_id === module.id).length === 0 && (
+                  {creatingLessonForModule === module.id ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newLessonTitle}
+                          onChange={(e) => setNewLessonTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !isCreating) {
+                              handleCreateLesson(module.id);
+                            }
+                            if (e.key === "Escape") {
+                              setCreatingLessonForModule(null);
+                              setNewLessonTitle("");
+                            }
+                          }}
+                          placeholder="Enter lesson title..."
+                          className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleCreateLesson(module.id)}
+                          disabled={isCreating || !newLessonTitle.trim()}
+                          className="rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {isCreating ? "Creating..." : "Add"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCreatingLessonForModule(null);
+                            setNewLessonTitle("");
+                          }}
+                          className="rounded-md bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setCreatingLessonForModule(module.id)}
+                      className="inline-flex items-center gap-2 rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Lesson
+                    </button>
+                  )}
+                  {courseDetails.lessons.filter((l: any) => l.module_id === module.id).length === 0 && !creatingLessonForModule && (
                     <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                       No lessons in this module yet
                     </p>
@@ -175,20 +270,69 @@ export function CourseBuilder({ courseId, userId }: CourseBuilderProps) {
                             key={lesson.id}
                             className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-900"
                           >
-                            <div className="flex items-center gap-2">
-                              <Video className="h-4 w-4 text-zinc-400" />
-                              <span className="text-sm text-zinc-900 dark:text-zinc-100">
-                                {lesson.title}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600">
-                                <Edit className="h-3 w-3" />
-                              </button>
-                              <button className="rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-900 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30">
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
+                            {editingLesson === lesson.id ? (
+                              <div className="flex flex-1 items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={editingLessonTitle}
+                                  onChange={(e) => setEditingLessonTitle(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      handleUpdateLesson(module.id, lesson.id);
+                                    }
+                                    if (e.key === "Escape") {
+                                      setEditingLesson(null);
+                                      setEditingLessonTitle("");
+                                    }
+                                  }}
+                                  className="flex-1 rounded-md border border-zinc-300 px-2 py-1 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleUpdateLesson(module.id, lesson.id)}
+                                  disabled={!editingLessonTitle.trim()}
+                                  className="rounded-md bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingLesson(null);
+                                    setEditingLessonTitle("");
+                                  }}
+                                  className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-2">
+                                  <Video className="h-4 w-4 text-zinc-400" />
+                                  <span className="text-sm text-zinc-900 dark:text-zinc-100">
+                                    {lesson.title}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingLesson(lesson.id);
+                                      setEditingLessonTitle(lesson.title);
+                                    }}
+                                    className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteLesson(module.id, lesson.id)}
+                                    disabled={isDeleting}
+                                    className="rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-900 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 disabled:opacity-50"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ))}
                     </div>

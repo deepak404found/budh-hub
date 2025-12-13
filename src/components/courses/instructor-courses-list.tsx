@@ -1,11 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, BookOpen, Eye, EyeOff, Edit } from "lucide-react";
-import { useInstructorCourses } from "@/hooks/courses";
+import { Plus, BookOpen, Eye, EyeOff, Edit, Upload } from "lucide-react";
+import { useInstructorCourses, usePublishCourse } from "@/hooks/courses";
 
 export function InstructorCoursesList() {
-  const { courses, isLoading, error } = useInstructorCourses();
+  const { courses, isLoading, error, refetch } = useInstructorCourses();
+  const { publish, isPublishing } = usePublishCourse();
+  const [publishingCourseId, setPublishingCourseId] = useState<string | null>(null);
+
+  const handleTogglePublish = async (courseId: string, currentStatus: boolean) => {
+    setPublishingCourseId(courseId);
+    try {
+      await publish(courseId, !currentStatus);
+      refetch(); // Refresh the list after publishing
+    } finally {
+      setPublishingCourseId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -91,34 +104,71 @@ export function InstructorCoursesList() {
                   </div>
                 </div>
                 <div className="ml-4 flex items-center gap-1">
-                  {course.is_published ? (
-                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      <Eye className="mr-1 inline h-3 w-3" />
-                      Published
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-                      <EyeOff className="mr-1 inline h-3 w-3" />
-                      Draft
-                    </span>
-                  )}
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      course.is_published
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                    }`}
+                  >
+                    {course.is_published ? (
+                      <>
+                        <Eye className="mr-1 inline h-3 w-3" />
+                        Published
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="mr-1 inline h-3 w-3" />
+                        Draft
+                      </>
+                    )}
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-2">
-                <Link
-                  href={`/instructor/courses/${course.id}/builder` as any}
-                  className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+              <div className="mt-4 space-y-3">
+                {/* Publish/Unpublish Button - Always visible and prominent */}
+                <button
+                  onClick={() => handleTogglePublish(course.id, course.is_published || false)}
+                  disabled={publishingCourseId === course.id || isPublishing}
+                  className={`w-full rounded-md px-4 py-3 text-center text-sm font-semibold text-white shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${
+                    course.is_published
+                      ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500 dark:bg-yellow-700 dark:hover:bg-yellow-600"
+                      : "bg-green-600 hover:bg-green-700 focus:ring-green-500 dark:bg-green-700 dark:hover:bg-green-600"
+                  }`}
+                  title={course.is_published ? "Unpublish this course to hide it from learners" : "Publish this course to make it visible to learners"}
                 >
-                  <Edit className="mr-1 inline h-4 w-4" />
-                  Edit
-                </Link>
-                <Link
-                  href={`/courses/${course.id}`}
-                  className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-                >
-                  View
-                </Link>
+                  {course.is_published ? (
+                    <>
+                      <EyeOff className="mr-2 inline h-4 w-4" />
+                      {publishingCourseId === course.id ? "Unpublishing..." : "Unpublish Course"}
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 inline h-4 w-4" />
+                      {publishingCourseId === course.id ? "Publishing..." : "Publish Course"}
+                    </>
+                  )}
+                </button>
+                
+                {/* Action Buttons Row */}
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/instructor/courses/${course.id}/builder` as any}
+                    className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                  >
+                    <Edit className="mr-1 inline h-4 w-4" />
+                    Edit
+                  </Link>
+                  {course.is_published && (
+                    <Link
+                      href={`/courses/${course.id}`}
+                      className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                    >
+                      View
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           ))}
