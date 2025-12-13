@@ -36,10 +36,16 @@ export function createRedisAdapter() {
         await setVerificationToken(data.identifier, data.token, data.expires);
         return data;
       } catch (error) {
-        console.error("Error creating verification token in Redis:", error);
-        // Fallback: return data even if Redis fails (for development)
-        // In production, you might want to throw the error
-        return data;
+        const err = error instanceof Error 
+          ? error 
+          : new Error("Failed to create verification token");
+        console.error("[AUTH ERROR] Failed to create verification token in Redis:", {
+          identifier: data.identifier,
+          error: err.message,
+          stack: err.stack,
+        });
+        // Throw error - no fallback to database
+        throw err;
       }
     },
 
@@ -50,11 +56,18 @@ export function createRedisAdapter() {
       try {
         const token = await getVerificationToken(params.identifier, params.token);
         if (!token) {
+          // Token not found - this is expected for invalid/expired tokens
+          console.warn(`[AUTH] Verification token not found for ${params.identifier}`);
           return null;
         }
         
         // Delete the token after use (one-time use)
-        await deleteVerificationToken(params.identifier, params.token);
+        try {
+          await deleteVerificationToken(params.identifier, params.token);
+        } catch (deleteError) {
+          // Log but don't fail - token was already retrieved
+          console.error("[AUTH WARNING] Failed to delete verification token after use:", deleteError);
+        }
         
         return {
           identifier: token.identifier,
@@ -62,8 +75,16 @@ export function createRedisAdapter() {
           expires: token.expires,
         };
       } catch (error) {
-        console.error("Error using verification token from Redis:", error);
-        return null;
+        const err = error instanceof Error 
+          ? error 
+          : new Error("Failed to verify token");
+        console.error("[AUTH ERROR] Failed to use verification token from Redis:", {
+          identifier: params.identifier,
+          error: err.message,
+          stack: err.stack,
+        });
+        // Throw error - no fallback to database
+        throw err;
       }
     },
   };
