@@ -7,10 +7,18 @@ import { generateLessonVideoKey, getPublicUrl } from "@/lib/r2/utils";
 import { uploadVideoSchema } from "@/lib/validations/lesson";
 import { isInstructorOrAbove } from "@/lib/types/roles";
 
+// Configure execution settings for this route
+export const maxDuration = 300; // 5 minutes max execution time
+export const runtime = "nodejs";
+
 /**
  * POST /api/upload/video
  * Upload video file directly (proxied through API to avoid CORS)
  * Body: FormData with file, lessonId
+ *
+ * IMPORTANT: Vercel serverless functions have a hard 4.5MB body size limit
+ * that cannot be overridden. For files larger than 4.5MB, consider using
+ * direct client-side uploads to R2 using presigned URLs (see /api/upload/signed-url)
  */
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -51,6 +59,27 @@ export async function POST(req: Request) {
     if (!file) {
       console.warn("[UPLOAD:VIDEO] No file provided in request");
       return NextResponse.json({ error: "File is required" }, { status: 400 });
+    }
+
+    // Check Vercel's hard limit (4.5MB for serverless functions)
+    // This is a platform limitation that cannot be overridden
+    const VERCEL_BODY_SIZE_LIMIT = 4.5 * 1024 * 1024; // 4.5MB
+    if (file.size > VERCEL_BODY_SIZE_LIMIT) {
+      console.warn(
+        `[UPLOAD:VIDEO] File size (${file.size} bytes) exceeds Vercel's 4.5MB limit`
+      );
+      return NextResponse.json(
+        {
+          error: `File too large. Maximum size for direct upload is 4.5MB due to server limitations. Your file is ${(
+            file.size /
+            1024 /
+            1024
+          ).toFixed(
+            2
+          )}MB. Please use a smaller file or implement direct client-side uploads using presigned URLs.`,
+        },
+        { status: 413 }
+      );
     }
 
     if (!lessonId || typeof lessonId !== "string") {
