@@ -56,10 +56,28 @@ export function VideoUpload({
     }
 
     // Validate file size
+    // Note: Vercel has a hard 4.5MB limit for serverless function request bodies
+    // We'll validate against both the app limit and Vercel's limit
     const maxSize = uploadConfig.maxVideoSizeBytes;
+    const vercelLimit = 4.5 * 1024 * 1024; // 4.5MB in bytes
+
     if (file.size > maxSize) {
       toast.error(
         `Video size must be less than ${uploadConfig.maxVideoSizeMB}MB`
+      );
+      return;
+    }
+
+    // Warn if file exceeds Vercel's serverless function limit
+    if (file.size > vercelLimit) {
+      toast.error(
+        `Video file is too large for direct upload (${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB). ` +
+          `Maximum size for direct upload is 4.5MB due to server limitations. ` +
+          `Please use a smaller file or contact support for alternative upload methods.`
       );
       return;
     }
@@ -101,8 +119,38 @@ export function VideoUpload({
       });
 
       if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.error || "Failed to upload video");
+        // Handle different error response types
+        let errorMessage = "Failed to upload video";
+
+        // Check if response is JSON
+        const contentType = uploadResponse.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          try {
+            const error = await uploadResponse.json();
+            errorMessage = error.error || errorMessage;
+          } catch {
+            // Fall through to default error message if JSON parsing fails
+          }
+        } else {
+          // Handle non-JSON responses (e.g., HTML error pages, plain text)
+          if (uploadResponse.status === 413) {
+            errorMessage = `File too large. Maximum size is ${uploadConfig.maxVideoSizeMB}MB. The server may have additional size limits.`;
+          } else {
+            const text = await uploadResponse.text();
+            // Try to extract meaningful error from text response
+            if (
+              text.includes("Payload Too Large") ||
+              text.includes("Request Entity Too Large")
+            ) {
+              errorMessage = `File too large. Maximum size is ${uploadConfig.maxVideoSizeMB}MB.`;
+            } else if (text.length < 200) {
+              // Only use text if it's short (likely an error message, not HTML)
+              errorMessage = text || errorMessage;
+            }
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const { key, url } = await uploadResponse.json();
