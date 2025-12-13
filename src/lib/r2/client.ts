@@ -1,7 +1,8 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { r2Config, isR2Configured } from "@/lib/config/env";
 
-if (!isR2Configured()) {
+// Only show warnings in development
+if (process.env.NODE_ENV === "development" && !isR2Configured()) {
   console.warn("⚠️  R2 is not configured. R2 client will not work properly.");
 }
 
@@ -15,5 +16,3 @@ export const r2 = isR2Configured()
       },
     })
   : (null as unknown as S3Client); // Type assertion for optional R2
-
-

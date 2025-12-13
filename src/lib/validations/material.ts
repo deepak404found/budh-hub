@@ -17,8 +17,6 @@ const allowedMaterialTypes = [
 ] as const;
 
 export const uploadMaterialSchema = z.object({
-  course_id: z.string().uuid("Invalid course ID"),
-  lesson_id: z.string().uuid("Invalid lesson ID").optional(),
   filename: z.string().min(1, "Filename is required"),
   size: z.number().int().max(uploadConfig.maxMaterialSizeBytes, `File size must be less than ${uploadConfig.maxMaterialSizeMB}MB`),
   type: z.string().refine(

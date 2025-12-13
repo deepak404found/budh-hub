@@ -16,10 +16,13 @@ export function generateFileKey(prefix: string, filename: string): string {
 /**
  * Get public URL for an R2 object
  * Uses R2_PUBLIC_URL if configured, otherwise constructs from bucket name
+ * Returns a fallback URL if R2 is not configured (for development)
  */
 export function getPublicUrl(key: string): string {
   if (!isR2Configured()) {
-    throw new Error("R2 is not configured");
+    // Return a fallback URL instead of throwing (allows UI to render)
+    console.warn("R2 is not configured, returning fallback URL");
+    return `#r2-not-configured/${key}`;
   }
 
   if (r2Config.publicUrl) {
@@ -61,7 +64,9 @@ export interface FileMetadata {
   etag?: string;
 }
 
-export async function getFileMetadata(key: string): Promise<FileMetadata | null> {
+export async function getFileMetadata(
+  key: string
+): Promise<FileMetadata | null> {
   if (!isR2Configured()) {
     throw new Error("R2 is not configured");
   }
@@ -87,28 +92,47 @@ export async function getFileMetadata(key: string): Promise<FileMetadata | null>
 /**
  * Generate file key for course thumbnail
  */
-export function generateCourseThumbnailKey(courseId: string, filename: string): string {
+export function generateCourseThumbnailKey(
+  courseId: string,
+  filename: string
+): string {
   return generateFileKey(`courses/${courseId}/thumbnails`, filename);
 }
 
 /**
  * Generate file key for lesson video
  */
-export function generateLessonVideoKey(lessonId: string, filename: string): string {
+export function generateLessonVideoKey(
+  lessonId: string,
+  filename: string
+): string {
   return generateFileKey(`lessons/${lessonId}/videos`, filename);
 }
 
 /**
  * Generate file key for course material
  */
-export function generateCourseMaterialKey(courseId: string, materialId: string, filename: string): string {
-  return generateFileKey(`courses/${courseId}/materials`, `${materialId}-${filename}`);
+export function generateCourseMaterialKey(
+  courseId: string,
+  materialId: string,
+  filename: string
+): string {
+  return generateFileKey(
+    `courses/${courseId}/materials`,
+    `${materialId}-${filename}`
+  );
 }
 
 /**
  * Generate file key for lesson material
  */
-export function generateLessonMaterialKey(lessonId: string, materialId: string, filename: string): string {
-  return generateFileKey(`lessons/${lessonId}/materials`, `${materialId}-${filename}`);
+export function generateLessonMaterialKey(
+  lessonId: string,
+  materialId: string,
+  filename: string
+): string {
+  return generateFileKey(
+    `lessons/${lessonId}/materials`,
+    `${materialId}-${filename}`
+  );
 }
-

@@ -18,3 +18,4 @@ export const course_materials = pgTable("course_materials", {
   created_at: createdAt,
 });
 
+

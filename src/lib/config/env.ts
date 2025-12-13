@@ -16,7 +16,8 @@ export const dbConfig = {
   url: process.env.DATABASE_URL || "",
 } as const;
 
-if (!dbConfig.url) {
+// Only show warnings in development and if actually missing
+if (process.env.NODE_ENV === "development" && !dbConfig.url) {
   console.warn("⚠️  DATABASE_URL is not set. Database operations will fail.");
 }
 
@@ -31,7 +32,8 @@ export const authConfig = {
     "http://localhost:3000",
 } as const;
 
-if (!authConfig.secret) {
+// Only show warnings in development and if actually missing
+if (process.env.NODE_ENV === "development" && !authConfig.secret) {
   console.warn(
     "⚠️  NEXTAUTH_SECRET is not set. Authentication may not work properly."
   );
@@ -53,7 +55,8 @@ export const isSMTPConfigured = (): boolean => {
   return !!(smtpConfig.host && smtpConfig.user && smtpConfig.password);
 };
 
-if (!isSMTPConfigured()) {
+// Only show warnings in development
+if (process.env.NODE_ENV === "development" && !isSMTPConfigured()) {
   console.warn(
     "⚠️  SMTP configuration incomplete. Email authentication will not work.\n" +
       "Required environment variables:\n" +
@@ -78,7 +81,8 @@ export const isRedisConfigured = (): boolean => {
   return !!(redisConfig.url && redisConfig.token);
 };
 
-if (!isRedisConfigured()) {
+// Only show warnings in development
+if (process.env.NODE_ENV === "development" && !isRedisConfigured()) {
   console.warn(
     "⚠️  Upstash Redis credentials not found. AI cache and session storage will not work. " +
       "Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in your .env file."
@@ -108,7 +112,8 @@ export const isR2Configured = (): boolean => {
   );
 };
 
-if (!isR2Configured()) {
+// Only show warnings in development
+if (process.env.NODE_ENV === "development" && !isR2Configured()) {
   console.warn(
     "⚠️  R2 configuration incomplete. File uploads will not work.\n" +
       "Required environment variables:\n" +
@@ -127,12 +132,12 @@ export const uploadConfig = {
   // Video upload limits (in MB)
   maxVideoSizeMB: Number(process.env.MAX_VIDEO_SIZE_MB || "10"),
   // Study materials upload limits (in MB)
-  maxMaterialSizeMB: Number(process.env.MAX_MATERIAL_SIZE_MB || "50"),
+  maxMaterialSizeMB: Number(process.env.MAX_MATERIAL_SIZE_MB || "15"),
   // Convert to bytes for validation
   maxVideoSizeBytes:
     Number(process.env.MAX_VIDEO_SIZE_MB || "10") * 1024 * 1024,
   maxMaterialSizeBytes:
-    Number(process.env.MAX_MATERIAL_SIZE_MB || "50") * 1024 * 1024,
+    Number(process.env.MAX_MATERIAL_SIZE_MB || "15") * 1024 * 1024,
 } as const;
 
 // ============================================================================
