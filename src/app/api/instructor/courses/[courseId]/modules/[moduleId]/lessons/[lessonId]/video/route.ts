@@ -23,8 +23,15 @@ export async function DELETE(
 ) {
   const startTime = Date.now();
   let user: Awaited<ReturnType<typeof getCurrentUserWithRole>> | null = null;
+  let courseId: string | undefined;
+  let moduleId: string | undefined;
+  let lessonId: string | undefined;
+
   try {
-    const { courseId, moduleId, lessonId } = await params;
+    const paramsData = await params;
+    courseId = paramsData.courseId;
+    moduleId = paramsData.moduleId;
+    lessonId = paramsData.lessonId;
 
     console.log(
       `[DELETE:VIDEO] Starting deletion - Course: ${courseId}, Module: ${moduleId}, Lesson: ${lessonId}`
@@ -156,7 +163,9 @@ export async function DELETE(
   } catch (error) {
     const totalTime = Date.now() - startTime;
     console.error(
-      `[DELETE:VIDEO] Error after ${totalTime}ms - Course: ${courseId}, Module: ${moduleId}, Lesson: ${lessonId}`,
+      `[DELETE:VIDEO] Error after ${totalTime}ms - Course: ${
+        courseId || "unknown"
+      }, Module: ${moduleId || "unknown"}, Lesson: ${lessonId || "unknown"}`,
       error
     );
     return NextResponse.json(

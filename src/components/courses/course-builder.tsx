@@ -750,10 +750,9 @@ export function CourseBuilder({ courseId, userId }: CourseBuilderProps) {
                                     {lesson.title}
                                   </span>
                                   {lesson.video_key && (
-                                    <CheckCircle2
-                                      className="h-3 w-3 text-green-600 dark:text-green-400"
-                                      title="Video uploaded"
-                                    />
+                                    <span title="Video uploaded">
+                                      <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                    </span>
                                   )}
                                   {lesson.content && (
                                     <span

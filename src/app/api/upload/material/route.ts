@@ -22,6 +22,7 @@ export async function POST(req: Request) {
   let lessonId: string | null = null;
   let filename: string | null = null;
   let fileSize: number | null = null;
+  let user: Awaited<ReturnType<typeof getCurrentUserWithRole>> | null = null;
 
   try {
     if (!isR2Configured()) {
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await getCurrentUserWithRole();
+    user = await getCurrentUserWithRole();
     if (!user || !isInstructorOrAbove(user.role)) {
       console.warn(
         `[UPLOAD:MATERIAL] Unauthorized access attempt by user: ${
