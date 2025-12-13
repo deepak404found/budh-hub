@@ -43,3 +43,4 @@ export type CreateLessonInput = z.infer<typeof createLessonSchema>;
 export type UpdateLessonInput = z.infer<typeof updateLessonSchema>;
 export type UploadVideoInput = z.infer<typeof uploadVideoSchema>;
 
+

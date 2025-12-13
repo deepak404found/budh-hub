@@ -175,10 +175,11 @@ async function main() {
           description: "A starter course for BudhHub LMS",
           category: "General",
           difficulty: "Beginner",
+          is_published: true, // Publish the course so learners can see it
         })
         .where(eq(courses.id, existingCourse[0].id))
         .returning();
-      console.log("Updated existing course:", course.title);
+      console.log("✅ Updated existing course:", course.title);
     } else {
       // Insert new course
       [course] = await db
@@ -189,9 +190,10 @@ async function main() {
           description: "A starter course for BudhHub LMS",
           category: "General",
           difficulty: "Beginner",
+          is_published: true, // Publish the course so learners can see it
         })
         .returning();
-      console.log("Created new course:", course.title);
+      console.log("✅ Created new course:", course.title);
     }
 
     // Upsert module - check if exists by course and title

@@ -37,5 +37,27 @@ if (!dbConfig.url) {
   throw new Error("DATABASE_URL is required. Please set it in your .env file.");
 }
 
-const pool = new Pool({ connectionString: dbConfig.url });
+// Configure connection pool with proper limits and error handling
+const pool = new Pool({
+  connectionString: dbConfig.url,
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+  // Handle connection errors
+  allowExitOnIdle: false, // Don't exit process when pool is idle
+});
+
+// Handle pool errors
+pool.on("error", (err) => {
+  console.error("Unexpected database pool error:", err);
+  // Don't exit the process, let the application handle it
+});
+
+// Handle connection errors
+pool.on("connect", (client) => {
+  client.on("error", (err) => {
+    console.error("Database client error:", err);
+  });
+});
+
 export const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
