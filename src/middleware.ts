@@ -8,12 +8,17 @@ import { authConfig } from "@/lib/config/env";
  * Uses JWT token to check authentication status
  */
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Always allow auth API routes - no authentication check needed
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req: request,
     secret: authConfig.secret,
   });
-
-  const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/auth", "/api/auth"];
