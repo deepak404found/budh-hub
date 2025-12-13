@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BudhHub LMS Starter",
-  description: "Starter scaffold for BudhHub LMS",
+  title: "BudhHub LMS - Modern Learning Management System",
+  description:
+    "Transform your learning journey with BudhHub. Create courses, track progress, and achieve your goals with our modern LMS platform.",
 };
 
 export default function RootLayout({
