@@ -15,12 +15,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // NextAuth v5 uses 'authjs.session-token' as the cookie name
   const token = await getToken({
     req: request,
     secret: authConfig.secret,
+    cookieName: "authjs.session-token", // Explicitly set for NextAuth v5
   });
 
-  console.log("token in middleware", token);
+  console.log(
+    "[MIDDLEWARE] Path:",
+    pathname,
+    "Token:",
+    token ? "exists" : "null",
+    "Token sub:",
+    token?.sub
+  );
 
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/auth", "/api/auth"];

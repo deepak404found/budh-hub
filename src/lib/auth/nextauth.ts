@@ -75,13 +75,13 @@ export const authOptions = {
       from: smtpConfig.from || smtpConfig.user || "noreply@example.com",
       sendVerificationRequest: async ({ identifier: email, url, provider }) => {
         const { host } = new URL(url);
-        
+
         // Generate the email template
         const emailHtml = EmailTemplate(url, host, email);
 
         // Send email using centralized email service
         const { sendEmail } = await import("@/lib/email");
-        
+
         await sendEmail({
           to: email,
           from: provider.from,
@@ -89,12 +89,29 @@ export const authOptions = {
           html: emailHtml,
         });
       },
-    })
+    }),
   ],
   secret: authConfig.secret,
   session: { strategy: "jwt" as const },
+  cookies: {
+    sessionToken: {
+      name: "authjs.session-token", // NextAuth v5 cookie name
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production", // Secure flag for HTTPS
+      },
+    },
+  },
   callbacks: {
-    async redirect({ url, baseUrl }: { url: string; baseUrl: string }): Promise<string> {
+    async redirect({
+      url,
+      baseUrl,
+    }: {
+      url: string;
+      baseUrl: string;
+    }): Promise<string> {
       // Handle callbackUrl from query params
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
@@ -106,13 +123,21 @@ export const authOptions = {
       // Default to dashboard
       return `${baseUrl}/dashboard`;
     },
-    async jwt({ token, account, user }: { token: any; account?: any; user?: any }) {
+    async jwt({
+      token,
+      account,
+      user,
+    }: {
+      token: any;
+      account?: any;
+      user?: any;
+    }) {
       // On initial sign in, fetch role from database
       if (user?.id && !token.role) {
         const role = await getUserRole(user.id);
         token.role = role || "LEARNER";
       }
-      
+
       // If role is not in token, fetch it (for existing sessions)
       if (token.sub && !token.role) {
         const role = await getUserRole(token.sub);
@@ -133,9 +158,8 @@ export const authOptions = {
         session.user.accessToken = token.accessToken;
       }
       return session;
-    }
-  } as any
+    },
+  } as any,
 };
 
 export const { auth, handlers } = NextAuth(authOptions);
-
