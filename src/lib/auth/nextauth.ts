@@ -12,6 +12,7 @@ import type { UserRole } from "@/lib/types/roles";
 import { smtpConfig, authConfig, isSMTPConfigured } from "@/lib/config/env";
 
 export const authOptions = {
+  trustHost: true, // Trust all hosts (works for localhost and production)
   adapter: createRedisAdapter(),
   providers: [
     CredentialsProvider({
@@ -93,6 +94,18 @@ export const authOptions = {
   secret: authConfig.secret,
   session: { strategy: "jwt" as const },
   callbacks: {
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }): Promise<string> {
+      // Handle callbackUrl from query params
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Allow relative callback URLs
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      // Default to dashboard
+      return `${baseUrl}/dashboard`;
+    },
     async jwt({ token, account, user }: { token: any; account?: any; user?: any }) {
       // On initial sign in, fetch role from database
       if (user?.id && !token.role) {
