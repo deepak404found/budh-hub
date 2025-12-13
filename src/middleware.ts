@@ -20,13 +20,25 @@ export async function middleware(request: NextRequest) {
     secret: authConfig.secret,
   });
 
+  console.log("token in middleware", token);
+
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/auth", "/api/auth"];
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/dashboard", "/courses", "/my-courses", "/admin", "/instructor"];
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
+  const protectedRoutes = [
+    "/dashboard",
+    "/courses",
+    "/my-courses",
+    "/admin",
+    "/instructor",
+  ];
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
   // If user is authenticated and tries to access auth pages, redirect to dashboard
   if (token) {
@@ -65,5 +77,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-
-
